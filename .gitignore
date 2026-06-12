@@ -1,6 +1,18 @@
 # Дистрибутивы сборки
 dist/
 
+# Инструкции и контекст для ИИ
+instructions/
+project_context_for_ai.txt
+
+# Сборка и утилиты
+build.py
+scraper.py
+
+# Python кэш
+__pycache__/
+*.pyc
+
 # VS Code
 .vscode/
 *.code-workspace
@@ -8,3 +20,8 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+Thumbs.db
+
+build.py
+scraper.py
+project_context_for_ai.txt
