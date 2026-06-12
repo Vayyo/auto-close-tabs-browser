@@ -4,6 +4,9 @@ const assert = require('node:assert/strict');
 const {
   DEFAULT_TIMEOUT,
   RAM_PER_TAB_MB,
+  SUPPORTED_LOCALES,
+  normalizeLocale,
+  resolveLocale,
   isWhiteListedUrl,
   attachTimeToUrl,
   formatRam,
@@ -15,6 +18,18 @@ const {
 test('exports stable business constants', () => {
   assert.equal(DEFAULT_TIMEOUT, 10);
   assert.equal(RAM_PER_TAB_MB, 150);
+  assert.deepEqual(SUPPORTED_LOCALES, ['ru', 'en']);
+});
+
+test('normalizeLocale and resolveLocale support browser autodetect and manual override', () => {
+  assert.equal(normalizeLocale('en-US'), 'en');
+  assert.equal(normalizeLocale('ru_RU'), 'ru');
+  assert.equal(normalizeLocale('de-DE'), null);
+
+  assert.equal(resolveLocale('en', 'ru-RU'), 'en');
+  assert.equal(resolveLocale('auto', 'en-GB'), 'en');
+  assert.equal(resolveLocale(null, 'ru-RU'), 'ru');
+  assert.equal(resolveLocale(undefined, 'de-DE'), 'ru');
 });
 
 test('isWhiteListedUrl matches exact host and valid subdomain', () => {
@@ -48,6 +63,8 @@ test('formatRam formats MB and GB thresholds', () => {
   assert.equal(formatRam(0), '0 МБ');
   assert.equal(formatRam(512), '512 МБ');
   assert.equal(formatRam(2048), '2.00 ГБ');
+  assert.equal(formatRam(512, 'en'), '512 MB');
+  assert.equal(formatRam(2048, 'en'), '2.00 GB');
 });
 
 test('sanitizeWhitelistInput normalizes host input', () => {

@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const { formatRam, sanitizeWhitelistInput, isValidTimeoutMinutes } = TabLifecycleLogic;
+  const { formatRam, sanitizeWhitelistInput, isValidTimeoutMinutes, resolveLocale } = TabLifecycleLogic;
+  const { applyI18n, t } = TabLifecycleI18n;
 
   // DOM Элементы
   const timeoutInput = document.getElementById('timeoutInput');
@@ -17,10 +18,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const unprotectAllBtn = document.getElementById('unprotectAllBtn');
   const protectedTabsContainer = document.getElementById('protectedTabsContainer');
   const restoreAllBtn = document.getElementById('restoreAllBtn');
+  const localeSelect = document.getElementById('localeSelect');
 
   // Кэш состояния
   let globalTrashBin = [];
   let globalProtectedTabs = [];
+  let currentLocale = resolveLocale(null, navigator.language);
 
   // Защита от XSS: Безопасное создание DOM-узлов вместо innerHTML
   function createDOMRow(mainText, subText, actionBtnConfig) {
@@ -79,7 +82,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   async function init() {
-    const data = await chrome.storage.local.get(['timeoutMinutes', 'savedRamMb', 'whiteList', 'trashBin', 'protectDashboard', 'protectedTabIds']);
+    const data = await chrome.storage.local.get(['timeoutMinutes', 'savedRamMb', 'whiteList', 'trashBin', 'protectDashboard', 'protectedTabIds', 'locale']);
+    currentLocale = resolveLocale(data.locale, navigator.language);
+    localeSelect.value = data.locale || 'auto';
+    renderStaticTexts();
     
     timeoutInput.value = data.timeoutMinutes || 10;
     renderRam(data.savedRamMb || 0);
@@ -100,7 +106,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   function renderRam(mb) {
-    ramDisplay.textContent = formatRam(mb);
+    ramDisplay.textContent = formatRam(mb, currentLocale);
+  }
+
+  function renderStaticTexts() {
+    applyI18n(document, currentLocale);
+
+    localeSelect.options[0].textContent = t(currentLocale, 'languageAuto');
+    localeSelect.options[1].textContent = t(currentLocale, 'languageRu');
+    localeSelect.options[2].textContent = t(currentLocale, 'languageEn');
   }
 
   // Защита от XSS: Безопасный рендер белого списка
@@ -130,14 +144,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (list.length === 0) {
       const emptyLi = document.createElement('li');
       emptyLi.style.cssText = 'color: #80868b; justify-content: center;';
-      emptyLi.textContent = 'Корзина пуста';
+      emptyLi.textContent = t(currentLocale, 'trashEmpty');
       trashContainer.appendChild(emptyLi);
       return;
     }
     list.forEach((tab) => {
       const row = createDOMRow(tab.title || tab.url, null, {
         className: 'secondary restore-btn',
-        text: 'Восстановить',
+        text: t(currentLocale, 'restore'),
         dataAttr: { name: 'data-url', val: tab.url }
       });
       trashContainer.appendChild(row);
@@ -158,14 +172,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (list.length === 0) {
       const emptyLi = document.createElement('li');
       emptyLi.style.cssText = 'color: #80868b; justify-content: center;';
-      emptyLi.textContent = 'Защищенных вкладок не найдено';
+      emptyLi.textContent = t(currentLocale, 'protectedEmpty');
       protectedTabsContainer.appendChild(emptyLi);
       return;
     }
     list.forEach((tab) => {
       const row = createDOMRow(tab.title || tab.url, `[ID: ${tab.id}]`, {
         className: 'secondary remove-protect-btn',
-        text: 'Снять иммунитет',
+        text: t(currentLocale, 'removeProtection'),
         dataAttr: { name: 'data-id', val: String(tab.id) }
       });
       protectedTabsContainer.appendChild(row);
@@ -214,7 +228,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   restoreAllBtn.addEventListener('click', async () => {
     if (globalTrashBin.length === 0) return;
 
-    if (confirm(`Восстановить все вкладки из корзины (${globalTrashBin.length} шт.)?`)) {
+    if (confirm(t(currentLocale, 'restoreAllConfirm', { count: globalTrashBin.length }))) {
       try {
         const urlsToRestore = globalTrashBin.map(t => t.url).filter(Boolean);
         globalTrashBin = [];
@@ -231,7 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   unprotectAllBtn.addEventListener('click', async () => {
     if (globalProtectedTabs.length === 0) return;
-    if (confirm('Вы уверены, что хотите снять защиту со ВСЕХ вкладок?')) {
+    if (confirm(t(currentLocale, 'unprotectAllConfirm'))) {
       await chrome.storage.local.set({ protectedTabIds: [] });
       globalProtectedTabs = [];
       applyProtectedFilter();
@@ -257,8 +271,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const min = parseInt(timeoutInput.value, 10);
     if (isValidTimeoutMinutes(min)) {
       await chrome.storage.local.set({ timeoutMinutes: min });
-      alert('Интервал успешно обновлен для всех вкладок!');
+      alert(t(currentLocale, 'timeoutSaved'));
     }
+  });
+
+  localeSelect.addEventListener('change', async () => {
+    const localePreference = localeSelect.value;
+    currentLocale = resolveLocale(localePreference, navigator.language);
+    await chrome.storage.local.set({ locale: localePreference });
+    renderStaticTexts();
+    renderRam(await chrome.storage.local.get('savedRamMb').then(data => data.savedRamMb || 0));
+    renderWhitelist((await chrome.storage.local.get('whiteList')).whiteList || []);
+    applyTrashFilter();
+    applyProtectedFilter();
   });
 
   addWhitelistBtn.addEventListener('click', async () => {

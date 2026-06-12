@@ -83,7 +83,7 @@
   </style>
 </head>
 <body>
-  <h3>Tab Lifecycle Timer</h3>
+  <h3 data-i18n="popupTitle">Tab Lifecycle Timer</h3>
   
   <div id="masterBox" class="master-switch-box">
     <span id="masterStatusText">Таймер работает</span>
@@ -94,20 +94,22 @@
   </div>
 
   <div class="stat-box">
-    Текущий таймаут: <strong id="currentTimeout">-</strong> мин.<br>
-    Сберегли памяти: <strong id="ramCounter">0</strong> МБ
+    <span data-i18n="currentTimeoutLabel">Текущий таймаут:</span> <strong id="currentTimeout">-</strong> <span data-i18n="timeoutUnit">min.</span><br>
+    <span data-i18n="savedMemoryLabel">Сберегли памяти:</span> <strong id="ramCounter">0</strong>
   </div>
 
   <div class="tab-protect-box">
-    <span>Игнорировать эту вкладку</span>
+    <span data-i18n="ignoreCurrentTab">Игнорировать эту вкладку</span>
     <label class="switch">
       <input type="checkbox" id="protectTabCheckbox">
       <span class="slider"></span>
     </label>
   </div>
 
-  <button id="openDashboardBtn">Панель управления</button>
+  <button id="openDashboardBtn" data-i18n="openDashboard">Панель управления</button>
 
+  <script src="logic.js"></script>
+  <script src="i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

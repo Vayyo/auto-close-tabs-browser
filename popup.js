@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const { resolveLocale, formatRam } = TabLifecycleLogic;
+  const { applyI18n, t } = TabLifecycleI18n;
   const currentTimeout = document.getElementById('currentTimeout');
   const ramCounter = document.getElementById('ramCounter');
   const openDashboardBtn = document.getElementById('openDashboardBtn');
@@ -8,16 +10,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const masterStatusText = document.getElementById('masterStatusText');
 
   let currentTabId = null;
+  let currentLocale = resolveLocale(null, navigator.language);
 
   try {
     const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (activeTab && activeTab.id) currentTabId = activeTab.id;
 
     // Считываем состояние таймера (true по умолчанию)
-    const data = await chrome.storage.local.get(['timeoutMinutes', 'savedRamMb', 'protectedTabIds', 'timerEnabled']);
+    const data = await chrome.storage.local.get(['timeoutMinutes', 'savedRamMb', 'protectedTabIds', 'timerEnabled', 'locale']);
+    currentLocale = resolveLocale(data.locale, navigator.language);
+    applyI18n(document, currentLocale);
     
     currentTimeout.textContent = data.timeoutMinutes || 10;
-    ramCounter.textContent = data.savedRamMb || 0;
+    ramCounter.textContent = formatRam(data.savedRamMb || 0, currentLocale);
 
     // Настройка главного переключателя
     const isEnabled = data.timerEnabled !== false;
@@ -40,10 +45,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   function updateMasterUI(isEnabled) {
     if (isEnabled) {
       masterBox.classList.remove('paused');
-      masterStatusText.textContent = 'Таймер работает';
+      masterStatusText.textContent = t(currentLocale, 'timerRunning');
     } else {
       masterBox.classList.add('paused');
-      masterStatusText.textContent = 'Таймер НА ПАУЗЕ';
+      masterStatusText.textContent = t(currentLocale, 'timerPaused');
     }
   }
 

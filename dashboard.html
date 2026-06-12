@@ -105,23 +105,31 @@
 </head>
 <body>
   <div class="container">
-    <h1>Панель управления расширением</h1>
+    <h1 data-i18n="dashboardTitle">Панель управления расширением</h1>
 
     <div id="permissionsBanner" class="permissions-banner">
-      <span>⚠️ Для работы анализа медиа в Firefox необходимо предоставить доступ к сайтам.</span>
-      <button id="requestPermissionsBtn">Разрешить доступ</button>
+      <span data-i18n="permissionsBanner">⚠️ Для работы анализа медиа в Firefox необходимо предоставить доступ к сайтам.</span>
+      <button id="requestPermissionsBtn" data-i18n="requestPermissions">Разрешить доступ</button>
     </div>
     
     <div class="grid">
       <div class="card">
-        <h2>Глобальные настройки</h2>
-        <p style="font-size: 13px; color: #5f6368;">Вкладки закрываются, если провели в фоне указанное количество минут.</p>
+        <h2 data-i18n="globalSettings">Глобальные настройки</h2>
+        <p style="font-size: 13px; color: #5f6368;" data-i18n="globalSettingsHint">Вкладки закрываются, если провели в фоне указанное количество минут.</p>
         <div class="flex-input">
           <input type="number" id="timeoutInput" min="1" max="1440">
-          <button id="saveTimeoutBtn">Сохранить</button>
+          <button id="saveTimeoutBtn" data-i18n="save">Сохранить</button>
+        </div>
+        <div class="flex-input">
+          <label for="localeSelect" style="font-size: 13px; color: #5f6368; align-self: center;" data-i18n="languageLabel">Язык интерфейса</label>
+          <select id="localeSelect" style="padding: 8px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px; flex-grow: 1;">
+            <option value="auto">Авто (по браузеру)</option>
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+          </select>
         </div>
         <div class="toggle-wrapper">
-          <span class="toggle-label">Не закрывать вкладку Панели Управления</span>
+          <span class="toggle-label" data-i18n="protectDashboard">Не закрывать вкладку Панели Управления</span>
           <label class="switch">
             <input type="checkbox" id="protectDashboardCheckbox">
             <span class="slider"></span>
@@ -130,34 +138,34 @@
       </div>
 
       <div class="card">
-        <h2>Сбереженная память</h2>
-        <p style="font-size: 13px; color: #5f6368;">Примерный объем оперативной памяти, освобожденный утилитой:</p>
+        <h2 data-i18n="savedMemoryTitle">Сбереженная память</h2>
+        <p style="font-size: 13px; color: #5f6368;" data-i18n="savedMemoryHint">Примерный объем оперативной памяти, освобожденный утилитой:</p>
         <div id="ramDisplay" class="stat-val">0 МБ</div>
       </div>
 
       <div class="card">
-        <h2>Белый список доменов (Всегда игнорировать сайт)</h2>
+        <h2 data-i18n="whitelistTitle">Белый список доменов (Всегда игнорировать сайт)</h2>
         <div class="flex-input">
-          <input type="text" id="whitelistInput" placeholder="например: github.com">
-          <button id="addWhitelistBtn">Добавить</button>
+          <input type="text" id="whitelistInput" placeholder="например: github.com" data-i18n-placeholder="whitelistPlaceholder">
+          <button id="addWhitelistBtn" data-i18n="add">Добавить</button>
         </div>
         <ul id="whitelistContainer"></ul>
       </div>
 
       <div class="card">
-        <h2>Недавно закрытые вкладки (Корзина)</h2>
+        <h2 data-i18n="trashTitle">Недавно закрытые вкладки (Корзина)</h2>
         <div class="flex-header">
-          <input type="text" id="trashSearchInput" class="search-input" placeholder="Поиск по названию или URL...">
-          <button id="restoreAllBtn" class="secondary">Восстановить все</button>
+          <input type="text" id="trashSearchInput" class="search-input" placeholder="Поиск по названию или URL..." data-i18n-placeholder="trashSearchPlaceholder">
+          <button id="restoreAllBtn" class="secondary" data-i18n="restoreAll">Восстановить все</button>
         </div>
         <ul id="trashContainer"></ul>
       </div>
 
       <div class="card card-full">
-        <h2>Вкладки с активным иммунитетом (Защищены через меню)</h2>
+        <h2 data-i18n="protectedTabsTitle">Вкладки с активным иммунитетом (Защищены через меню)</h2>
         <div class="flex-header">
-          <input type="text" id="protectedSearchInput" class="search-input" placeholder="Поиск по защищенным вкладкам...">
-          <button id="unprotectAllBtn" class="danger">Перестать игнорировать все</button>
+          <input type="text" id="protectedSearchInput" class="search-input" placeholder="Поиск по защищенным вкладкам..." data-i18n-placeholder="protectedSearchPlaceholder">
+          <button id="unprotectAllBtn" class="danger" data-i18n="unprotectAll">Перестать игнорировать все</button>
         </div>
         <ul id="protectedTabsContainer"></ul>
       </div>
@@ -166,6 +174,7 @@
   </div>
 
   <script src="logic.js"></script>
+  <script src="i18n.js"></script>
   <script src="dashboard.js"></script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 (function (globalScope) {
   const DEFAULT_TIMEOUT = 10;
   const RAM_PER_TAB_MB = 150;
+  const SUPPORTED_LOCALES = ['ru', 'en'];
 
   function isWhiteListedUrl(urlStr, whiteList = []) {
     try {
@@ -27,9 +28,23 @@
     }
   }
 
-  function formatRam(mb) {
-    if (mb >= 1024) return `${(mb / 1024).toFixed(2)} ГБ`;
-    return `${mb} МБ`;
+  function normalizeLocale(locale) {
+    if (typeof locale !== 'string') return null;
+
+    const normalized = locale.trim().toLowerCase().split(/[-_]/)[0];
+    return SUPPORTED_LOCALES.includes(normalized) ? normalized : null;
+  }
+
+  function resolveLocale(localePreference, browserLanguage) {
+    const preferredLocale = normalizeLocale(localePreference);
+    if (preferredLocale) return preferredLocale;
+
+    return normalizeLocale(browserLanguage) || 'ru';
+  }
+
+  function formatRam(mb, locale = 'ru') {
+    if (mb >= 1024) return `${(mb / 1024).toFixed(2)} ${locale === 'en' ? 'GB' : 'ГБ'}`;
+    return `${mb} ${locale === 'en' ? 'MB' : 'МБ'}`;
   }
 
   function sanitizeWhitelistInput(value) {
@@ -58,6 +73,9 @@
   const api = {
     DEFAULT_TIMEOUT,
     RAM_PER_TAB_MB,
+    SUPPORTED_LOCALES,
+    normalizeLocale,
+    resolveLocale,
     isWhiteListedUrl,
     attachTimeToUrl,
     formatRam,
