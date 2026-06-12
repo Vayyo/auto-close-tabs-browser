@@ -1,7 +1,7 @@
 (function (globalScope) {
   const DEFAULT_TIMEOUT = 10;
   const RAM_PER_TAB_MB = 150;
-  const SUPPORTED_LOCALES = ['ru', 'en'];
+  const SUPPORTED_LOCALES = ['ru', 'en', 'uk'];
 
   function isWhiteListedUrl(urlStr, whiteList = []) {
     try {

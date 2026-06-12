@@ -153,6 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     localeSelect.options[0].textContent = t(currentLocale, 'languageAuto');
     localeSelect.options[1].textContent = t(currentLocale, 'languageRu');
     localeSelect.options[2].textContent = t(currentLocale, 'languageEn');
+    localeSelect.options[3].textContent = t(currentLocale, 'languageUk');
 
     themeSelect.options[0].textContent = t(currentLocale, 'themeAuto');
     themeSelect.options[1].textContent = t(currentLocale, 'themeLight');

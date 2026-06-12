@@ -23,16 +23,19 @@ const {
 test('exports stable business constants', () => {
   assert.equal(DEFAULT_TIMEOUT, 10);
   assert.equal(RAM_PER_TAB_MB, 150);
-  assert.deepEqual(SUPPORTED_LOCALES, ['ru', 'en']);
+  assert.deepEqual(SUPPORTED_LOCALES, ['ru', 'en', 'uk']);
 });
 
 test('normalizeLocale and resolveLocale support browser autodetect and manual override', () => {
   assert.equal(normalizeLocale('en-US'), 'en');
   assert.equal(normalizeLocale('ru_RU'), 'ru');
+  assert.equal(normalizeLocale('uk-UA'), 'uk');
   assert.equal(normalizeLocale('de-DE'), null);
 
   assert.equal(resolveLocale('en', 'ru-RU'), 'en');
+  assert.equal(resolveLocale('uk', 'ru-RU'), 'uk');
   assert.equal(resolveLocale('auto', 'en-GB'), 'en');
+  assert.equal(resolveLocale('auto', 'uk-UA'), 'uk');
   assert.equal(resolveLocale(null, 'ru-RU'), 'ru');
   assert.equal(resolveLocale(undefined, 'de-DE'), 'ru');
 });
