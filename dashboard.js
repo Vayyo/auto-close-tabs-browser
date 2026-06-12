@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     trashContainer.innerHTML = '';
     if (list.length === 0) {
       const emptyLi = document.createElement('li');
-      emptyLi.style.cssText = 'color: #80868b; justify-content: center;';
+      emptyLi.className = 'empty-state';
       emptyLi.textContent = t(currentLocale, 'trashEmpty');
       trashContainer.appendChild(emptyLi);
       return;
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     protectedTabsContainer.innerHTML = '';
     if (list.length === 0) {
       const emptyLi = document.createElement('li');
-      emptyLi.style.cssText = 'color: #80868b; justify-content: center;';
+      emptyLi.className = 'empty-state';
       emptyLi.textContent = t(currentLocale, 'protectedEmpty');
       protectedTabsContainer.appendChild(emptyLi);
       return;
