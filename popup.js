@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const { resolveLocale, formatRam, resolveTheme, applyTheme, normalizeTheme, syncThemeVideo } = TabLifecycleLogic;
+  const { applyI18n, t } = TabLifecycleI18n;
+  const GACHI_VIDEO_URL = 'https://gachiradio.com/videos/video4.mp4';
   const currentTimeout = document.getElementById('currentTimeout');
   const ramCounter = document.getElementById('ramCounter');
   const openDashboardBtn = document.getElementById('openDashboardBtn');
@@ -6,18 +9,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   const pauseTimerCheckbox = document.getElementById('pauseTimerCheckbox');
   const masterBox = document.getElementById('masterBox');
   const masterStatusText = document.getElementById('masterStatusText');
+  const themeVideo = document.getElementById('themeVideo');
 
   let currentTabId = null;
+  let currentLocale = resolveLocale(null, navigator.language);
+
+  function syncThemePreference(themePreference) {
+    try {
+      localStorage.setItem('theme', themePreference);
+    } catch (e) {
+      console.warn('[Theme] Failed to persist theme locally:', e);
+    }
+  }
 
   try {
     const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (activeTab && activeTab.id) currentTabId = activeTab.id;
 
     // Считываем состояние таймера (true по умолчанию)
-    const data = await chrome.storage.local.get(['timeoutMinutes', 'savedRamMb', 'protectedTabIds', 'timerEnabled']);
+    const data = await chrome.storage.local.get(['timeoutMinutes', 'savedRamMb', 'protectedTabIds', 'timerEnabled', 'locale', 'theme']);
+    currentLocale = resolveLocale(data.locale, navigator.language);
+    applyI18n(document, currentLocale);
+    
+    // Тема
+    const themePreference = normalizeTheme(data.theme);
+    syncThemePreference(themePreference);
+    const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const resolvedTheme = resolveTheme(themePreference, isSystemDark);
+    applyTheme(document, resolvedTheme);
+    syncThemeVideo(themeVideo, resolvedTheme, GACHI_VIDEO_URL);
     
     currentTimeout.textContent = data.timeoutMinutes || 10;
-    ramCounter.textContent = data.savedRamMb || 0;
+    ramCounter.textContent = formatRam(data.savedRamMb || 0, currentLocale);
 
     // Настройка главного переключателя
     const isEnabled = data.timerEnabled !== false;
@@ -40,10 +63,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   function updateMasterUI(isEnabled) {
     if (isEnabled) {
       masterBox.classList.remove('paused');
-      masterStatusText.textContent = 'Таймер работает';
+      masterStatusText.textContent = t(currentLocale, 'timerRunning');
     } else {
       masterBox.classList.add('paused');
-      masterStatusText.textContent = 'Таймер НА ПАУЗЕ';
+      masterStatusText.textContent = t(currentLocale, 'timerPaused');
     }
   }
 

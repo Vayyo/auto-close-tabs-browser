@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const { formatRam, sanitizeWhitelistInput, isValidTimeoutMinutes, resolveLocale, normalizeTheme, resolveTheme, applyTheme, watchSystemTheme, syncThemeVideo } = TabLifecycleLogic;
+  const { applyI18n, t } = TabLifecycleI18n;
+  const GACHI_VIDEO_URL = 'https://gachiradio.com/videos/video4.mp4';
+
   // DOM Элементы
   const timeoutInput = document.getElementById('timeoutInput');
   const saveTimeoutBtn = document.getElementById('saveTimeoutBtn');
@@ -15,10 +19,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const unprotectAllBtn = document.getElementById('unprotectAllBtn');
   const protectedTabsContainer = document.getElementById('protectedTabsContainer');
   const restoreAllBtn = document.getElementById('restoreAllBtn');
+  const localeSelect = document.getElementById('localeSelect');
+  const themeSelect = document.getElementById('themeSelect');
+  const themeVideo = document.getElementById('themeVideo');
 
   // Кэш состояния
   let globalTrashBin = [];
   let globalProtectedTabs = [];
+  let currentLocale = resolveLocale(null, navigator.language);
+  let themeUnsubscribe = null;
 
   // Защита от XSS: Безопасное создание DOM-узлов вместо innerHTML
   function createDOMRow(mainText, subText, actionBtnConfig) {
@@ -76,8 +85,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  function syncThemePreference(themePreference) {
+    try {
+      localStorage.setItem('theme', themePreference);
+    } catch (e) {
+      console.warn('[Theme] Failed to persist theme locally:', e);
+    }
+  }
+
+  function initTheme(themePreference) {
+    themeSelect.value = themePreference;
+    syncThemePreference(themePreference);
+    applyResolvedTheme(themePreference);
+  }
+
+  function applyResolvedTheme(themePreference) {
+    if (themeUnsubscribe) {
+      themeUnsubscribe();
+      themeUnsubscribe = null;
+    }
+    const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const resolved = resolveTheme(themePreference, isSystemDark);
+    applyTheme(document, resolved);
+    syncThemeVideo(themeVideo, resolved, GACHI_VIDEO_URL);
+    if (themePreference === 'auto') {
+      themeUnsubscribe = watchSystemTheme((isDark) => {
+        const autoResolvedTheme = resolveTheme('auto', isDark);
+        applyTheme(document, autoResolvedTheme);
+        syncThemeVideo(themeVideo, autoResolvedTheme, GACHI_VIDEO_URL);
+      });
+    }
+  }
+
   async function init() {
-    const data = await chrome.storage.local.get(['timeoutMinutes', 'savedRamMb', 'whiteList', 'trashBin', 'protectDashboard', 'protectedTabIds']);
+    const data = await chrome.storage.local.get(['timeoutMinutes', 'savedRamMb', 'whiteList', 'trashBin', 'protectDashboard', 'protectedTabIds', 'locale', 'theme']);
+    currentLocale = resolveLocale(data.locale, navigator.language);
+    localeSelect.value = data.locale || 'auto';
+    initTheme(normalizeTheme(data.theme));
+    renderStaticTexts();
     
     timeoutInput.value = data.timeoutMinutes || 10;
     renderRam(data.savedRamMb || 0);
@@ -91,6 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const protectedIds = data.protectedTabIds || [];
     globalProtectedTabs = activeTabs.filter(tab => protectedIds.includes(tab.id));
     applyProtectedFilter();
+
   }
 
   protectDashboardCheckbox.addEventListener('change', async () => {
@@ -98,8 +144,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   function renderRam(mb) {
-    if (mb >= 1024) ramDisplay.textContent = `${(mb / 1024).toFixed(2)} ГБ`;
-    else ramDisplay.textContent = `${mb} МБ`;
+    ramDisplay.textContent = formatRam(mb, currentLocale);
+  }
+
+  function renderStaticTexts() {
+    applyI18n(document, currentLocale);
+
+    localeSelect.options[0].textContent = t(currentLocale, 'languageAuto');
+    localeSelect.options[1].textContent = t(currentLocale, 'languageRu');
+    localeSelect.options[2].textContent = t(currentLocale, 'languageEn');
+    localeSelect.options[3].textContent = t(currentLocale, 'languageUk');
+
+    themeSelect.options[0].textContent = t(currentLocale, 'themeAuto');
+    themeSelect.options[1].textContent = t(currentLocale, 'themeLight');
+    themeSelect.options[2].textContent = t(currentLocale, 'themeDark');
+    const gachiOption = themeSelect.querySelector('option[value="gachi"]');
+    if (gachiOption) gachiOption.textContent = t(currentLocale, 'themeGachi');
   }
 
   // Защита от XSS: Безопасный рендер белого списка
@@ -128,15 +188,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     trashContainer.innerHTML = '';
     if (list.length === 0) {
       const emptyLi = document.createElement('li');
-      emptyLi.style.cssText = 'color: #80868b; justify-content: center;';
-      emptyLi.textContent = 'Корзина пуста';
+      emptyLi.className = 'empty-state';
+      emptyLi.textContent = t(currentLocale, 'trashEmpty');
       trashContainer.appendChild(emptyLi);
       return;
     }
     list.forEach((tab) => {
       const row = createDOMRow(tab.title || tab.url, null, {
         className: 'secondary restore-btn',
-        text: 'Восстановить',
+        text: t(currentLocale, 'restore'),
         dataAttr: { name: 'data-url', val: tab.url }
       });
       trashContainer.appendChild(row);
@@ -156,15 +216,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     protectedTabsContainer.innerHTML = '';
     if (list.length === 0) {
       const emptyLi = document.createElement('li');
-      emptyLi.style.cssText = 'color: #80868b; justify-content: center;';
-      emptyLi.textContent = 'Защищенных вкладок не найдено';
+      emptyLi.className = 'empty-state';
+      emptyLi.textContent = t(currentLocale, 'protectedEmpty');
       protectedTabsContainer.appendChild(emptyLi);
       return;
     }
     list.forEach((tab) => {
       const row = createDOMRow(tab.title || tab.url, `[ID: ${tab.id}]`, {
         className: 'secondary remove-protect-btn',
-        text: 'Снять иммунитет',
+        text: t(currentLocale, 'removeProtection'),
         dataAttr: { name: 'data-id', val: String(tab.id) }
       });
       protectedTabsContainer.appendChild(row);
@@ -213,7 +273,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   restoreAllBtn.addEventListener('click', async () => {
     if (globalTrashBin.length === 0) return;
 
-    if (confirm(`Восстановить все вкладки из корзины (${globalTrashBin.length} шт.)?`)) {
+    if (confirm(t(currentLocale, 'restoreAllConfirm', { count: globalTrashBin.length }))) {
       try {
         const urlsToRestore = globalTrashBin.map(t => t.url).filter(Boolean);
         globalTrashBin = [];
@@ -230,7 +290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   unprotectAllBtn.addEventListener('click', async () => {
     if (globalProtectedTabs.length === 0) return;
-    if (confirm('Вы уверены, что хотите снять защиту со ВСЕХ вкладок?')) {
+    if (confirm(t(currentLocale, 'unprotectAllConfirm'))) {
       await chrome.storage.local.set({ protectedTabIds: [] });
       globalProtectedTabs = [];
       applyProtectedFilter();
@@ -254,16 +314,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   saveTimeoutBtn.addEventListener('click', async () => {
     const min = parseInt(timeoutInput.value, 10);
-    if (min >= 1) {
+    if (isValidTimeoutMinutes(min)) {
       await chrome.storage.local.set({ timeoutMinutes: min });
-      alert('Интервал успешно обновлен для всех вкладок!');
+      alert(t(currentLocale, 'timeoutSaved'));
     }
   });
 
+  localeSelect.addEventListener('change', async () => {
+    const localePreference = localeSelect.value;
+    currentLocale = resolveLocale(localePreference, navigator.language);
+    await chrome.storage.local.set({ locale: localePreference });
+    renderStaticTexts();
+    renderRam(await chrome.storage.local.get('savedRamMb').then(data => data.savedRamMb || 0));
+    renderWhitelist((await chrome.storage.local.get('whiteList')).whiteList || []);
+    applyTrashFilter();
+    applyProtectedFilter();
+  });
+
+  themeSelect.addEventListener('change', async () => {
+    const themePreference = normalizeTheme(themeSelect.value);
+    await chrome.storage.local.set({ theme: themePreference });
+    syncThemePreference(themePreference);
+    applyResolvedTheme(themePreference);
+  });
+
   addWhitelistBtn.addEventListener('click', async () => {
-    let domain = whitelistInput.value.trim().toLowerCase();
+    let domain = sanitizeWhitelistInput(whitelistInput.value);
     if (!domain) return;
-    domain = domain.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
     const data = await chrome.storage.local.get('whiteList');
     let whiteList = data.whiteList || [];
     if (!whiteList.includes(domain)) {
