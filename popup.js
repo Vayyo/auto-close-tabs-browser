@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const { resolveLocale, formatRam, resolveTheme, applyTheme, normalizeTheme } = TabLifecycleLogic;
+  const { resolveLocale, formatRam, resolveTheme, applyTheme, normalizeTheme, syncThemeVideo } = TabLifecycleLogic;
   const { applyI18n, t } = TabLifecycleI18n;
+  const GACHI_VIDEO_URL = 'https://gachiradio.com/videos/video4.mp4';
   const currentTimeout = document.getElementById('currentTimeout');
   const ramCounter = document.getElementById('ramCounter');
   const openDashboardBtn = document.getElementById('openDashboardBtn');
@@ -8,6 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const pauseTimerCheckbox = document.getElementById('pauseTimerCheckbox');
   const masterBox = document.getElementById('masterBox');
   const masterStatusText = document.getElementById('masterStatusText');
+  const themeVideo = document.getElementById('themeVideo');
 
   let currentTabId = null;
   let currentLocale = resolveLocale(null, navigator.language);
@@ -35,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const resolvedTheme = resolveTheme(themePreference, isSystemDark);
     applyTheme(document, resolvedTheme);
+    syncThemeVideo(themeVideo, resolvedTheme, GACHI_VIDEO_URL);
     
     currentTimeout.textContent = data.timeoutMinutes || 10;
     ramCounter.textContent = formatRam(data.savedRamMb || 0, currentLocale);

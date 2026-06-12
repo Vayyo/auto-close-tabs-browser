@@ -7,7 +7,9 @@
     (function () {
       try {
         var themePreference = localStorage.getItem('theme');
-        var resolvedTheme = themePreference === 'dark'
+        var resolvedTheme = themePreference === 'gachi'
+          ? 'gachi'
+          : themePreference === 'dark'
           || (themePreference !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
           ? 'dark'
           : 'light';
@@ -94,6 +96,45 @@
       --bg-stat-box: #3c4043;
       --color-stat-box: #e8eaed;
     }
+    :root[data-theme="gachi"] {
+      --bg-body: #07070a;
+      --color-text: #f7f2ff;
+      --color-heading: #c9a7ff;
+      --color-h2: #c9a7ff;
+      --color-h2-border: rgba(201, 167, 255, 0.28);
+      --bg-card: rgba(18, 10, 34, 0.42);
+      --shadow-card: 0 10px 30px rgba(0,0,0,0.45);
+      --border-input: rgba(255,255,255,0.18);
+      --color-toggle-label: #f7f2ff;
+      --border-toggle-wrapper: rgba(255,255,255,0.16);
+      --bg-slider: rgba(255,255,255,0.2);
+      --bg-slider-checked: #c9a7ff;
+      --bg-slider-knob: #ffffff;
+      --bg-button: rgba(123, 97, 255, 0.18);
+      --bg-button-hover: rgba(123, 97, 255, 0.28);
+      --color-button-text: #ffffff;
+      --bg-button-secondary: rgba(255, 255, 255, 0.1);
+      --color-button-secondary: #efe5ff;
+      --bg-button-secondary-hover: rgba(255, 255, 255, 0.16);
+      --bg-button-danger: rgba(255, 120, 170, 0.16);
+      --bg-button-danger-hover: rgba(255, 120, 170, 0.26);
+      --bg-banner: rgba(201, 167, 255, 0.16);
+      --border-banner: rgba(201, 167, 255, 0.55);
+      --color-banner: #efe5ff;
+      --bg-scrollbar-thumb: rgba(255,255,255,0.22);
+      --color-empty: rgba(255,255,255,0.7);
+      --border-li: rgba(255,255,255,0.12);
+      --color-delete: #ff9fd7;
+      --color-stat: #c9a7ff;
+      --bg-tab-protect: rgba(201, 167, 255, 0.1);
+      --color-tab-protect: #e9dcff;
+      --color-placeholder: rgba(255,255,255,0.72);
+      --bg-master-switch: rgba(255,255,255,0.08);
+      --bg-master-switch-paused: rgba(92, 29, 27, 0.78);
+      --color-master-switch-paused: #ffc8bf;
+      --bg-stat-box: rgba(255,255,255,0.06);
+      --color-stat-box: #f7f2ff;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       background-color: var(--bg-body);
@@ -101,6 +142,33 @@
       padding: 30px;
       color: var(--color-text);
       transition: background-color 0.2s, color 0.2s;
+      position: relative;
+      min-height: 100vh;
+    }
+    .theme-video {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: -3;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      background: #000;
+    }
+    .theme-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.72), rgba(10, 5, 22, 0.84));
+    }
+    :root[data-theme="gachi"] .theme-video,
+    :root[data-theme="gachi"] .theme-overlay {
+      opacity: 1;
     }
     .container { max-width: 900px; margin: 0 auto; }
     h1 { font-size: 24px; color: var(--color-heading); margin-bottom: 25px; }
@@ -118,10 +186,33 @@
       padding: 20px;
       border-radius: 8px;
       box-shadow: var(--shadow-card);
+      border: 1px solid transparent;
       display: flex;
       flex-direction: column;
       min-height: 260px;
-      transition: background-color 0.2s;
+      transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    :root[data-theme="gachi"] .card {
+      backdrop-filter: blur(16px) saturate(120%);
+      -webkit-backdrop-filter: blur(16px) saturate(120%);
+      border-color: rgba(255,255,255,0.1);
+    }
+    :root[data-theme="gachi"] button {
+      backdrop-filter: blur(12px) saturate(140%);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    }
+    :root[data-theme="gachi"] button.danger {
+      color: #ffe7f1;
+      border-color: rgba(255, 170, 204, 0.24);
+    }
+    :root[data-theme="gachi"] input[type="number"],
+    :root[data-theme="gachi"] input[type="text"],
+    :root[data-theme="gachi"] select {
+      background-color: rgba(10, 6, 22, 0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     h2 { font-size: 16px; margin-top: 0; margin-bottom: 15px; color: var(--color-h2); border-bottom: 1px solid var(--color-h2-border); padding-bottom: 8px; transition: color 0.2s; }
     .flex-input { display: flex; gap: 10px; margin-bottom: 15px; }
@@ -187,8 +278,9 @@
     :root[data-theme="dark"] .search-input {
       background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke=%239aa0a6 stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>');
     }
-    button { padding: 8px 16px; background-color: var(--bg-button); color: var(--color-button-text); border: none; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 13px; white-space: nowrap; transition: background-color 0.2s; }
-    button:hover { background-color: var(--bg-button-hover); }
+    button { padding: 8px 16px; background: var(--bg-button); color: var(--color-button-text); border: none; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 13px; white-space: nowrap; transition: background 0.2s, transform 0.2s; }
+    button:hover { background: var(--bg-button-hover); }
+    :root[data-theme="gachi"] button:hover { transform: translateY(-1px); }
     button.secondary { background-color: var(--bg-button-secondary); color: var(--color-button-secondary); }
     button.secondary:hover { background-color: var(--bg-button-secondary-hover); }
     button.danger { background-color: var(--bg-button-danger); color: white; }
@@ -200,7 +292,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 12px 16px;
-      background-color: var(--bg-banner);
+      background: var(--bg-banner);
       border: 1px solid var(--border-banner);
       border-radius: 8px;
       margin-bottom: 20px;
@@ -220,6 +312,10 @@
     ul { list-style: none; padding: 0; margin: 0; height: 200px; overflow-y: auto; scrollbar-width: thin; }
     ul::-webkit-scrollbar { width: 6px; }
     ul::-webkit-scrollbar-thumb { background: var(--bg-scrollbar-thumb); border-radius: 3px; }
+    #trashContainer, #protectedTabsContainer, #whitelistContainer { scrollbar-width: none; }
+    #trashContainer::-webkit-scrollbar,
+    #protectedTabsContainer::-webkit-scrollbar,
+    #whitelistContainer::-webkit-scrollbar { width: 0; display: none; }
     li.empty-state { justify-content: center; color: var(--color-empty); height: 100%; border-bottom: none; box-sizing: border-box; }
     li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-li); font-size: 14px; transition: border-color 0.2s; }
     li:last-child { border-bottom: none; }
@@ -230,6 +326,9 @@
   </style>
 </head>
 <body>
+  <video id="themeVideo" class="theme-video" muted loop playsinline preload="none"></video>
+  <div class="theme-overlay"></div>
+
   <div class="container">
     <h1 data-i18n="dashboardTitle">Панель управления расширением</h1>
 
@@ -269,6 +368,7 @@
             <option value="auto">Авто (по системе)</option>
             <option value="light">Светлая</option>
             <option value="dark">Тёмная</option>
+            <option value="gachi">Gachi</option>
           </select>
         </div>
         <div class="toggle-wrapper">

@@ -60,7 +60,7 @@
   }
 
   function normalizeTheme(theme) {
-    const valid = ['auto', 'light', 'dark'];
+    const valid = ['auto', 'light', 'dark', 'gachi'];
     if (valid.includes(theme)) return theme;
     return 'auto';
   }
@@ -84,6 +84,30 @@
     const handler = (e) => callback(e.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
+  }
+
+  function syncThemeVideo(videoElement, resolvedTheme, videoUrl) {
+    if (!videoElement) return;
+
+    if (resolvedTheme === 'gachi') {
+      if (videoElement.dataset.src !== videoUrl) {
+        videoElement.dataset.src = videoUrl;
+        videoElement.src = videoUrl;
+      }
+      videoElement.muted = true;
+      videoElement.defaultMuted = true;
+      videoElement.volume = 0;
+      const playPromise = videoElement.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {});
+      }
+      return;
+    }
+
+    videoElement.pause();
+    videoElement.removeAttribute('src');
+    videoElement.load();
+    delete videoElement.dataset.src;
   }
 
   function getTabProtectionReason(context) {
@@ -112,6 +136,7 @@
     resolveTheme,
     applyTheme,
     watchSystemTheme,
+    syncThemeVideo,
     getTabProtectionReason,
   };
 

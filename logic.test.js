@@ -11,6 +11,7 @@ const {
   resolveTheme,
   applyTheme,
   watchSystemTheme,
+  syncThemeVideo,
   isWhiteListedUrl,
   attachTimeToUrl,
   formatRam,
@@ -40,6 +41,7 @@ test('normalizeTheme and resolveTheme support auto and manual theme selection', 
   assert.equal(normalizeTheme('dark'), 'dark');
   assert.equal(normalizeTheme('light'), 'light');
   assert.equal(normalizeTheme('auto'), 'auto');
+  assert.equal(normalizeTheme('gachi'), 'gachi');
   assert.equal(normalizeTheme('sepia'), 'auto');
   assert.equal(normalizeTheme(undefined), 'auto');
 
@@ -47,6 +49,7 @@ test('normalizeTheme and resolveTheme support auto and manual theme selection', 
   assert.equal(resolveTheme('auto', false), 'light');
   assert.equal(resolveTheme('dark', false), 'dark');
   assert.equal(resolveTheme('light', true), 'light');
+  assert.equal(resolveTheme('gachi', false), 'gachi');
 });
 
 test('applyTheme sets data-theme on documentElement when possible', () => {
@@ -104,6 +107,48 @@ test('watchSystemTheme subscribes and unsubscribes matchMedia listener', () => {
   } finally {
     global.window = originalWindow;
   }
+});
+
+test('syncThemeVideo toggles gachi background video safely', async () => {
+  let played = false;
+  let paused = false;
+  let loaded = false;
+  const videoElement = {
+    dataset: {},
+    muted: false,
+    defaultMuted: false,
+    volume: 1,
+    src: '',
+    play() {
+      played = true;
+      return Promise.resolve();
+    },
+    pause() {
+      paused = true;
+    },
+    load() {
+      loaded = true;
+    },
+    removeAttribute(name) {
+      if (name === 'src') this.src = '';
+    }
+  };
+
+  syncThemeVideo(videoElement, 'gachi', 'https://example.com/video.mp4');
+  await Promise.resolve();
+
+  assert.equal(videoElement.src, 'https://example.com/video.mp4');
+  assert.equal(videoElement.dataset.src, 'https://example.com/video.mp4');
+  assert.equal(videoElement.muted, true);
+  assert.equal(videoElement.defaultMuted, true);
+  assert.equal(videoElement.volume, 0);
+  assert.equal(played, true);
+
+  syncThemeVideo(videoElement, 'dark', 'https://example.com/video.mp4');
+  assert.equal(paused, true);
+  assert.equal(loaded, true);
+  assert.equal(videoElement.src, '');
+  assert.equal(videoElement.dataset.src, undefined);
 });
 
 test('isWhiteListedUrl matches exact host and valid subdomain', () => {

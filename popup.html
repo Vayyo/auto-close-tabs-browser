@@ -7,7 +7,9 @@
     (function () {
       try {
         var themePreference = localStorage.getItem('theme');
-        var resolvedTheme = themePreference === 'dark'
+        var resolvedTheme = themePreference === 'gachi'
+          ? 'gachi'
+          : themePreference === 'dark'
           || (themePreference !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
           ? 'dark'
           : 'light';
@@ -54,6 +56,25 @@
       --bg-button-hover: #aecbfa;
       --color-button-text: #202124;
     }
+    :root[data-theme="gachi"] {
+      --bg-body: #08070c;
+      --color-text: #fff7ff;
+      --color-h3: #c9a7ff;
+      --bg-master-switch: rgba(255,255,255,0.08);
+      --bg-master-switch-paused: rgba(92, 29, 27, 0.78);
+      --color-master-switch-paused: #ffc8bf;
+      --bg-stat-box: rgba(255,255,255,0.07);
+      --color-stat-box: #f4ebff;
+      --color-stat-strong: #c9a7ff;
+      --bg-tab-protect: rgba(201, 167, 255, 0.1);
+      --color-tab-protect: #e9dcff;
+      --bg-slider: rgba(255,255,255,0.25);
+      --bg-slider-checked: #c9a7ff;
+      --bg-slider-knob: #ffffff;
+      --bg-button: linear-gradient(135deg, #c9a7ff, #7b61ff);
+      --bg-button-hover: linear-gradient(135deg, #d9c0ff, #9a88ff);
+      --color-button-text: #ffffff;
+    }
     body {
       width: 240px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -62,6 +83,33 @@
       background-color: var(--bg-body);
       color: var(--color-text);
       transition: background-color 0.2s, color 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .theme-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -3;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      background: #000;
+    }
+    .theme-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.68), rgba(21, 7, 31, 0.78));
+    }
+    :root[data-theme="gachi"] .theme-video,
+    :root[data-theme="gachi"] .theme-overlay {
+      opacity: 1;
     }
     h3 { margin: 0 0 10px 0; font-size: 15px; color: var(--color-h3); transition: color 0.2s; }
     
@@ -77,6 +125,10 @@
       margin-bottom: 12px;
       font-weight: bold;
       transition: background-color 0.2s, color 0.2s;
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(14px) saturate(120%);
+      -webkit-backdrop-filter: blur(14px) saturate(120%);
     }
     .master-switch-box.paused {
       background-color: var(--bg-master-switch-paused);
@@ -91,6 +143,10 @@
       color: var(--color-stat-box);
       margin-bottom: 12px;
       transition: background-color 0.2s, color 0.2s;
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(14px) saturate(120%);
+      -webkit-backdrop-filter: blur(14px) saturate(120%);
     }
     .stat-box strong { color: var(--color-stat-strong); transition: color 0.2s; }
     
@@ -106,6 +162,10 @@
       margin-bottom: 12px;
       font-weight: 500;
       transition: background-color 0.2s, color 0.2s;
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(14px) saturate(120%);
+      -webkit-backdrop-filter: blur(14px) saturate(120%);
     }
     
     /* Общие стили Toggle Switches */
@@ -127,19 +187,25 @@
     button {
       width: 100%;
       padding: 8px;
-      background-color: var(--bg-button);
+      background: var(--bg-button);
       color: var(--color-button-text);
       border: none;
       border-radius: 4px;
       cursor: pointer;
       font-weight: 500;
       font-size: 13px;
-      transition: background-color 0.2s, color 0.2s;
+      transition: background 0.2s, color 0.2s, transform 0.2s;
+      position: relative;
+      z-index: 1;
     }
-    button:hover { background-color: var(--bg-button-hover); }
+    button:hover { background: var(--bg-button-hover); }
+    :root[data-theme="gachi"] button:hover { transform: translateY(-1px); }
   </style>
 </head>
 <body>
+  <video id="themeVideo" class="theme-video" muted loop playsinline preload="none"></video>
+  <div class="theme-overlay"></div>
+
   <h3 data-i18n="popupTitle">Tab Lifecycle Timer</h3>
   
   <div id="masterBox" class="master-switch-box">

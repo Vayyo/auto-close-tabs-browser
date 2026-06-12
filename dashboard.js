@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const { formatRam, sanitizeWhitelistInput, isValidTimeoutMinutes, resolveLocale, normalizeTheme, resolveTheme, applyTheme, watchSystemTheme } = TabLifecycleLogic;
+  const { formatRam, sanitizeWhitelistInput, isValidTimeoutMinutes, resolveLocale, normalizeTheme, resolveTheme, applyTheme, watchSystemTheme, syncThemeVideo } = TabLifecycleLogic;
   const { applyI18n, t } = TabLifecycleI18n;
+  const GACHI_VIDEO_URL = 'https://gachiradio.com/videos/video4.mp4';
 
   // DOM Элементы
   const timeoutInput = document.getElementById('timeoutInput');
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const restoreAllBtn = document.getElementById('restoreAllBtn');
   const localeSelect = document.getElementById('localeSelect');
   const themeSelect = document.getElementById('themeSelect');
+  const themeVideo = document.getElementById('themeVideo');
 
   // Кэш состояния
   let globalTrashBin = [];
@@ -105,9 +107,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const resolved = resolveTheme(themePreference, isSystemDark);
     applyTheme(document, resolved);
+    syncThemeVideo(themeVideo, resolved, GACHI_VIDEO_URL);
     if (themePreference === 'auto') {
       themeUnsubscribe = watchSystemTheme((isDark) => {
-        applyTheme(document, resolveTheme('auto', isDark));
+        const autoResolvedTheme = resolveTheme('auto', isDark);
+        applyTheme(document, autoResolvedTheme);
+        syncThemeVideo(themeVideo, autoResolvedTheme, GACHI_VIDEO_URL);
       });
     }
   }
@@ -152,6 +157,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     themeSelect.options[0].textContent = t(currentLocale, 'themeAuto');
     themeSelect.options[1].textContent = t(currentLocale, 'themeLight');
     themeSelect.options[2].textContent = t(currentLocale, 'themeDark');
+    const gachiOption = themeSelect.querySelector('option[value="gachi"]');
+    if (gachiOption) gachiOption.textContent = t(currentLocale, 'themeGachi');
   }
 
   // Защита от XSS: Безопасный рендер белого списка
