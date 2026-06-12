@@ -1,0 +1,1 @@
+# auto-close-tabs-browser
